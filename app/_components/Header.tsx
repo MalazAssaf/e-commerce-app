@@ -1,6 +1,6 @@
 "use client";
 // API
-import Api, { Category } from "../_utils/Api";
+import Api, { CartItemsListInterface, Category } from "../_utils/Api";
 
 // UI COMPONENTS
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,14 @@ import {
   DropdownMenuSeparator,
 } from "@radix-ui/react-dropdown-menu";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // NEXT
 import Image from "next/image";
@@ -27,10 +35,25 @@ import { useRouter } from "next/navigation";
 import { login, logout } from "../../store/authSlice";
 import { RootState, AppDispatch } from "../../store/store";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { CartContext } from "../_contexts/CartContext";
+import { NumberItemsInCartContext } from "../_contexts/NumberItemsInCartContext";
+
+// OTHERS
+import CartItemsList from "./CartItemsList";
+import { ItemsInCartContext } from "../_contexts/ItemsInCartContext";
+import Loading from "../(routes)/myOrders/Loading";
 
 export default function Header() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const { updateCart } = useContext(CartContext)!;
+  const { itemsCartList, setItemsCartList } = useContext(ItemsInCartContext);
+  const { itemsInCart, setItemsInCart } = useContext(NumberItemsInCartContext);
+
+  const storedJwt = localStorage.getItem("jwt");
+  const jwt = storedJwt ? JSON.parse(storedJwt) : null;
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -44,11 +67,28 @@ export default function Header() {
     Api.getCategoryList().then((data) => setCategories(data));
   }, [dispatch]);
 
+  useEffect(() => {
+    getCartItems();
+  }, [updateCart]);
+
   const handleLogOutBtn = () => {
     localStorage.clear();
     dispatch(logout());
     router.push("/sign-in");
     toast.success("Logged out successfully!");
+  };
+
+  const getCartItems = async () => {
+    const cartItems = await Api.getCartItems(user.id, jwt);
+    setItemsInCart(cartItems?.length);
+  };
+
+  const handleShowItemsList = async () => {
+    const cartItemsList: CartItemsListInterface[] = await Api.getCartItemsList(
+      user.id,
+      jwt
+    );
+    setItemsCartList(cartItemsList);
   };
 
   const categoryList = categories.map((cat) => (
@@ -59,7 +99,7 @@ export default function Header() {
           alt={cat.name}
           width={25}
           height={25}
-          unoptimized
+          unoptimized={true}
         />
         {cat.name}
       </DropdownMenuItem>
@@ -95,7 +135,33 @@ export default function Header() {
       </div>
 
       <div className="flex gap-2 items-center">
-        <ShoppingBag />0
+        <Sheet>
+          <SheetTrigger>
+            <ShoppingBag onClick={() => handleShowItemsList()} />
+          </SheetTrigger>
+          <SheetContent className="flex flex-col h-screen">
+            <SheetHeader>
+              <SheetTitle className="bg-amber-500 px-4 py-3 mt-5 font-bold capitalize rounded-md flex gap-2">
+                My cart
+                <ShoppingBag />
+              </SheetTitle>
+            </SheetHeader>
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-2">
+              {/* Show Loader While waiting for the API request to be finished */}
+              {itemsCartList.length === 0 ? <Loading /> : <CartItemsList />}
+            </div>
+            <SheetDescription>
+              <Link href={"/checkout"}>
+                <Button className="my-4 mx-auto flex justify-center w-9/10">
+                  Checkout
+                </Button>
+              </Link>
+            </SheetDescription>
+          </SheetContent>
+        </Sheet>
+
+        {itemsInCart}
         {!isLoggedIn ? (
           <Link href="/sign-in">
             <Button>Login</Button>
@@ -111,7 +177,9 @@ export default function Header() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Orders</DropdownMenuItem>
+              <Link href={"/myOrders"}>
+                <DropdownMenuItem>Orders</DropdownMenuItem>
+              </Link>
               <DropdownMenuItem onClick={handleLogOutBtn}>
                 Logout
               </DropdownMenuItem>

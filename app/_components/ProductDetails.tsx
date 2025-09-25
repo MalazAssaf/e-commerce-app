@@ -1,17 +1,82 @@
 "use client";
-import React, { useState } from "react";
+// API
+import Api, { Product, User } from "../_utils/Api";
 
-import { Product } from "../_utils/Api";
-import Image from "next/image";
+// UI COMPONENTS
 import { Button } from "@/components/ui/button";
 import { ShoppingBasket } from "lucide-react";
 import { DialogTitle } from "@radix-ui/react-dialog";
+
+// NEXT
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
+// REACT & REDUX
+import { useState, useEffect, useContext } from "react";
+import { toast } from "sonner";
+import { CartContext } from "../_contexts/CartContext";
+import Loader from "./Loader";
 
 export function ProductDetails({ product }: { product: Product }) {
   const [totalSellingPrice] = useState(
     product.sellingPrice ? product.sellingPrice : product.realPrice
   );
-  const [category, setCategory] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [user, setUser] = useState<User | null>(null);
+  const { updateCart, setUpdateCart } = useContext(CartContext)!;
+  const router = useRouter();
+  const storedJwt = localStorage.getItem("jwt");
+  const jwt = storedJwt ? JSON.parse(storedJwt) : null;
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
+
+  const handleAddToCart = async () => {
+    if (!jwt) {
+      router.push("/sign-in");
+      return;
+    }
+    if (!user) {
+      toast.error("User not found. Please log in again.");
+      return;
+    }
+
+    const data = {
+      data: {
+        quantity,
+        amount: quantity * totalSellingPrice,
+        products: {
+          connect: [product.id],
+        },
+        users_permissions_user: {
+          connect: [user.id],
+        },
+        userId: user.id,
+      },
+    };
+
+    try {
+      setLoading(true);
+      await Api.addToCart(data, jwt);
+      toast("Added to cart!");
+      setUpdateCart(!updateCart);
+    } catch (error) {
+      toast("Error while adding to cart");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 justify-center items-center">
       <Image
@@ -33,28 +98,36 @@ export function ProductDetails({ product }: { product: Product }) {
           <div className="flex gap-2 border ">
             <button
               className="px-8"
-              disabled={category === 1}
-              onClick={() => setCategory(category - 1)}
+              disabled={quantity === 1}
+              onClick={() => setQuantity(quantity - 1)}
             >
               -
             </button>
-            <h2>{category}</h2>
-            <button className="px-8" onClick={() => setCategory(category + 1)}>
+            <h2>{quantity}</h2>
+            <button className="px-8" onClick={() => setQuantity(quantity + 1)}>
               +
             </button>
           </div>
           <h1 className="text-2xl font-bold">
-            {(totalSellingPrice * category).toFixed(2)}$
+            {(totalSellingPrice * quantity).toFixed(2)}$
           </h1>
-          <Button className="text-black">
-            <ShoppingBasket /> Add to Cart!
+
+          {/* Button with loader */}
+          <Button
+            className="text-black flex items-center justify-center gap-2"
+            onClick={handleAddToCart}
+            disabled={loading}
+          >
+            {loading ? <Loader /> : <ShoppingBasket />}
+            {loading ? "Adding..." : "Add to Cart!"}
           </Button>
         </div>
+
         <h2 className="text-sm text-amber-500">
           category:
           {product.categories.map((cat) => (
             <span key={cat.id} className="text-gray-500">
-              {cat.name}
+              {cat.name + " "}
             </span>
           ))}
         </h2>

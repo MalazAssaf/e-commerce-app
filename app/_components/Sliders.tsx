@@ -14,6 +14,7 @@ import {
 import Image from "next/image";
 
 export default async function Sliders() {
+  // Server Side
   const sliders: Slider[] = await Api.getSliders();
   const sliderList: React.JSX.Element[] = sliders.map((slider, index) => {
     return (
