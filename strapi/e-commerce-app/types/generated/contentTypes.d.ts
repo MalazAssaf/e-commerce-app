@@ -432,7 +432,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     >;
     phone: Schema.Attribute.BigInteger;
     publishedAt: Schema.Attribute.DateTime;
-    totalOrderAmount: Schema.Attribute.Integer;
+    totalOrderAmount: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

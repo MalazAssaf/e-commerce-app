@@ -30,7 +30,10 @@ async function CategoryList({
                 : "bg-white"
             }`}
           >
-            <Link href={`/product-category/${cat.name}`}>
+            <Link
+              href={`/product-category/${cat.name}`}
+              className="flex justify-center items-center flex-col"
+            >
               <Image
                 src={`http://localhost:1337${cat?.icon[0]?.url}`}
                 alt="hi"

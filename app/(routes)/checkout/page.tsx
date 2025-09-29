@@ -119,6 +119,7 @@ function Checkout() {
         toast.success("The order is placed successfully!");
         router.push("/");
       } catch (error) {
+        console.log("Error ", error);
         toast.error("Error while placing order!");
       } finally {
         setLoading(false);

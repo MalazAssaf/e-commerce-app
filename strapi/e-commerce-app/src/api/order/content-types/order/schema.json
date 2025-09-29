@@ -27,7 +27,7 @@
       "type": "string"
     },
     "totalOrderAmount": {
-      "type": "integer"
+      "type": "decimal"
     },
     "userId": {
       "type": "integer"

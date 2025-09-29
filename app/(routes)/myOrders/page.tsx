@@ -21,7 +21,6 @@ import Loading from "./Loading";
 function MyOrders() {
   const route = useRouter();
   const [ordersList, setOrderLists] = useState<Order[]>([]);
-
   // ✅ Parse user from localStorage
   const storedUser =
     typeof window !== "undefined" ? localStorage.getItem("user") : null;
@@ -39,8 +38,9 @@ function MyOrders() {
 
   const getOrderList = async () => {
     if (!user) return;
-    const orderList = await Api.getOrders(user.id);
-    setOrderLists(orderList);
+    const orderList: [] = await Api.getOrders(user.id);
+    // Show the new orders first
+    setOrderLists(orderList.reverse());
   };
 
   return (

@@ -5,7 +5,15 @@ import Api, { CartItemsListInterface, Category } from "../_utils/Api";
 // UI COMPONENTS
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CircleUserIcon, LayoutGrid, Search, ShoppingBag } from "lucide-react";
+import {
+  CircleUserIcon,
+  House,
+  LayoutGrid,
+  Search,
+  ShoppingBag,
+  ShoppingBasket,
+  ShoppingCart,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,8 +117,12 @@ export default function Header() {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between p-4 shadow-md">
       <div className="flex gap-8 items-center">
-        <Link href="/">
-          <Image src="/logo.png" alt="logo" width={80} height={80} />
+        <Link
+          href="/"
+          className="flex gap-2 rounded-full bg-slate-200 p-3 capitalize cursor-pointer"
+        >
+          <House />
+          <h2>Home</h2>
         </Link>
 
         {/* Drop Down Menu */}
@@ -149,7 +161,19 @@ export default function Header() {
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto px-2">
               {/* Show Loader While waiting for the API request to be finished */}
-              {itemsCartList.length === 0 ? <Loading /> : <CartItemsList />}
+              {itemsCartList.length === 0 && itemsInCart !== 0 ? (
+                <Loading />
+              ) : itemsCartList.length === 0 && itemsInCart === 0 ? (
+                <p className="flex justify-center font-bold text-lg capitalize">
+                  Your cart is empty
+                </p>
+              ) : itemsCartList.length > 0 && itemsInCart !== 0 ? (
+                <CartItemsList />
+              ) : (
+                <p className="flex justify-center font-bold text-lg capitalize">
+                  Loading cart...
+                </p>
+              )}
             </div>
             <SheetDescription>
               <Link href={"/checkout"}>
